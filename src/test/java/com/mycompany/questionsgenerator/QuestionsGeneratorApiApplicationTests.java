@@ -1,4 +1,4 @@
-package com.mycompany.questionsgeneratorapi;
+package com.mycompany.questionsgenerator;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
