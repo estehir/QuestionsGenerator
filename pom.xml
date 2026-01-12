@@ -82,11 +82,12 @@
             <version>RELEASE</version>
             <scope>provided</scope>
         </dependency>
-        <!-- https://commons.apache.org/proper/commons-lang/dependency-info.html -->
+        <!-- Source: https://mvnrepository.com/artifact/org.apache.commons/commons-text -->
         <dependency>
             <groupId>org.apache.commons</groupId>
-            <artifactId>commons-lang3</artifactId>
-            <version>3.20.0</version>
+            <artifactId>commons-text</artifactId>
+            <version>1.15.0</version>
+            <scope>compile</scope>
         </dependency>
     </dependencies>
     <dependencyManagement>
