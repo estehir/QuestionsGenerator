@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/variables")
+@RequestMapping("/admin/variables")
 @RequiredArgsConstructor
 public class VariableController {
 
