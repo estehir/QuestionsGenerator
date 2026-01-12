@@ -1,23 +1,20 @@
 package com.mycompany.questionsgenerator.api.dtos;
 
-import com.mycompany.questionsgenerator.business.models.Template;
 import lombok.Builder;
-import lombok.Data;
+import lombok.Getter;
 
-@Data
+import java.time.LocalDateTime;
+import java.util.List;
+
+@Getter
 @Builder
 public class TemplateResponseDTO {
 
     private Long id;
     private String name;
     private String templateText;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 
-    public static TemplateResponseDTO fromEntity(Template template) {
-       return TemplateResponseDTO.builder()
-                .id(template.getId())
-                .name(template.getName())
-                .templateText(template.getTemplateText())
-                .build();
-    }
-
+    private List<TemplateVariableResponseDTO> variables;
 }

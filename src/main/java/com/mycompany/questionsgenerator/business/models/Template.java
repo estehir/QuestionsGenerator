@@ -4,21 +4,26 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
 @Getter
 @Setter
 @NoArgsConstructor
-@AllArgsConstructor
-@Builder
 public class Template {
+
+    @Builder
+    private Template(String name, String templateText) {
+        this.name = name;
+        this.templateText = templateText;
+    }
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, length = 100)
+    @Column(nullable = false, unique = true, length = 100)
     private String name;
 
     @Column(nullable = false)
@@ -29,7 +34,16 @@ public class Template {
             cascade = CascadeType.ALL,
             orphanRemoval = true
     )
-    private List<TemplateVariable> variables;
+    private List<TemplateVariable> variables = new ArrayList<>();
+
+    public void addVariable(TemplateVariable tv) {
+        variables.add(tv);
+        tv.setTemplate(this);
+    }
+
+    public void clearVariables() {
+        variables.clear();
+    }
 
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -49,3 +63,4 @@ public class Template {
     }
 
 }
+

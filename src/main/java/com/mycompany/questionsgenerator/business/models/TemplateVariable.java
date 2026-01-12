@@ -4,28 +4,38 @@ import jakarta.persistence.*;
 import lombok.*;
 
 @Entity
-@Table(uniqueConstraints = { @UniqueConstraint(columnNames = {"template_id", "variable_order"}) })
 @Getter
 @Setter
 @NoArgsConstructor
-@AllArgsConstructor
-@Builder
+@Table(
+        uniqueConstraints = {
+                @UniqueConstraint(columnNames = {"template_id", "variable_id"})
+        }
+)
 public class TemplateVariable {
+
+    @Builder
+    private TemplateVariable(Template template, Variable variable, Boolean required) {
+        this.template = template;
+        this.variable = variable;
+        this.required = required != null ? required : true;
+
+        template.getVariables().add(this);
+    }
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "template_id", nullable = false)
+    @JoinColumn(nullable = false)
     private Template template;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "variable_id", nullable = false)
+    @JoinColumn(nullable = false)
     private Variable variable;
 
     @Column(nullable = false)
     private Boolean required = true;
 
 }
-
