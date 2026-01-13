@@ -2,11 +2,9 @@ package com.mycompany.questionsgenerator.business.services;
 
 import com.mycompany.questionsgenerator.api.dtos.GeneratePromptRequestDTO;
 import com.mycompany.questionsgenerator.business.interfaces.IPromptGenerationService;
-import com.mycompany.questionsgenerator.business.models.Template;
-import com.mycompany.questionsgenerator.business.models.TemplateVariable;
-import com.mycompany.questionsgenerator.business.models.Variable;
-import com.mycompany.questionsgenerator.business.models.VariableOption;
+import com.mycompany.questionsgenerator.business.models.*;
 import com.mycompany.questionsgenerator.business.models.enums.VariableValueType;
+import com.mycompany.questionsgenerator.persistence.interfaces.IPromptDefinitionRepository;
 import com.mycompany.questionsgenerator.persistence.interfaces.ITemplateRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +19,7 @@ import java.util.Map;
 public class PromptGenerationService implements IPromptGenerationService {
 
     private final ITemplateRepository templateRepository;
+    private final IPromptDefinitionRepository promptDefinitionRepository;
 
     @Override
     @Transactional
@@ -56,7 +55,15 @@ public class PromptGenerationService implements IPromptGenerationService {
         StringSubstitutor substitutor =
                 new StringSubstitutor(resolvedValues, "{{", "}}");
 
-        return substitutor.replace(template.getTemplateText());
+        PromptDefinition promptBase =
+                promptDefinitionRepository.findByActiveTrue()
+                        .orElseThrow(() -> new IllegalStateException("No active prompt"));
+
+        return promptBase.getText()
+                + "\n\n"
+                + "---"
+                + "\n\n"
+                + substitutor.replace(template.getTemplateText());
     }
 
     private void validateValue(Variable variable, String value) {

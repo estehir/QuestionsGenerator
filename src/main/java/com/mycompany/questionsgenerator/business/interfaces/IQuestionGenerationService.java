@@ -5,7 +5,6 @@ import com.mycompany.questionsgenerator.api.dtos.GenerateQuestionResponseDTO;
 
 public interface IQuestionGenerationService {
 
-    GenerateQuestionResponseDTO generateQuestion(
-            GeneratePromptRequestDTO request
-    );
+    GenerateQuestionResponseDTO generateQuestion(GeneratePromptRequestDTO request);
+
 }

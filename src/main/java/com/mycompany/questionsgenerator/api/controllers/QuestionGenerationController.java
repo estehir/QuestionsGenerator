@@ -12,12 +12,12 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class QuestionGenerationController {
 
-    private final IQuestionGenerationService service;
+    private final IQuestionGenerationService questionGenerationService;
 
     @PostMapping("/generate")
     public ResponseEntity<GenerateQuestionResponseDTO> generate(@RequestBody GeneratePromptRequestDTO request) {
         return ResponseEntity.ok(
-                service.generateQuestion(request)
+                questionGenerationService.generateQuestion(request)
         );
     }
 }
