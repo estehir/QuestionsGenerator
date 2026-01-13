@@ -1,0 +1,13 @@
+package com.mycompany.questionsgenerator.api.dtos;
+
+import lombok.Builder;
+import lombok.Getter;
+
+@Getter
+@Builder
+public class GenerateQuestionResponseDTO {
+
+    private String chatbotProvider;
+    private String prompt;
+    private String response;
+}
