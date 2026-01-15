@@ -19,9 +19,7 @@ public class PromptGenerationController {
     private final IPromptGenerationService promptGenerationService;
 
     @PostMapping
-    public ResponseEntity<GeneratePromptResponseDTO> generate(
-            @RequestBody GeneratePromptRequestDTO request
-    ) {
+    public ResponseEntity<GeneratePromptResponseDTO> generate(@RequestBody GeneratePromptRequestDTO request) {
         PromptGenerationVO prompt = promptGenerationService.generatePrompt(request);
 
         return ResponseEntity.ok(
@@ -30,4 +28,5 @@ public class PromptGenerationController {
                         .build()
         );
     }
+
 }

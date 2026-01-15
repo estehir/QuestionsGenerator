@@ -17,6 +17,29 @@ public class VariableController {
     private final IVariableService variableService;
 
     /**
+     * Get variable by code.
+     */
+    @GetMapping("/code/{code}")
+    public ResponseEntity<VariableResponseDTO> getByCode(
+            @PathVariable String code) {
+
+        return ResponseEntity.ok(
+                variableService.getByCode(code)
+        );
+    }
+
+    /**
+     * List all variables.
+     */
+    @GetMapping
+    public ResponseEntity<List<VariableResponseDTO>> listAll() {
+
+        return ResponseEntity.ok(
+                variableService.listAll()
+        );
+    }
+
+    /**
      * Create a new variable.
      */
     @PostMapping
@@ -41,26 +64,5 @@ public class VariableController {
         );
     }
 
-    /**
-     * Get variable by code.
-     */
-    @GetMapping("/code/{code}")
-    public ResponseEntity<VariableResponseDTO> getByCode(
-            @PathVariable String code) {
 
-        return ResponseEntity.ok(
-                variableService.getByCode(code)
-        );
-    }
-
-    /**
-     * List all variables.
-     */
-    @GetMapping
-    public ResponseEntity<List<VariableResponseDTO>> listAll() {
-
-        return ResponseEntity.ok(
-                variableService.listAll()
-        );
-    }
 }

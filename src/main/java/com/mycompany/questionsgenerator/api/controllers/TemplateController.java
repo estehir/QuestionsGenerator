@@ -15,45 +15,43 @@ public class TemplateController {
 
     private final ITemplateService templateService;
 
-    /**
-     * Create or update a template version (backoffice).
-     * The template name is the business key.
-     */
-    @PostMapping
-    public ResponseEntity<TemplateVersionResponseDTO> create(
-            @RequestBody TemplateRequestDTO request) {
-
-        TemplateVersionResponseDTO response =
-                templateService.createTemplateVersion(request);
-
-        return ResponseEntity.ok(response);
-    }
 
     /**
      * Get template by template ID.
      */
-    @GetMapping("/{id}")
-    public ResponseEntity<TemplateResponseDTO> getTemplateById(@PathVariable Long id) {
-        return ResponseEntity.ok(templateService.getTemplateById(id));
+    @GetMapping("/{templateId}")
+    public ResponseEntity<TemplateResponseDTO> getTemplateById(@PathVariable Long templateId) {
+        return ResponseEntity.ok(templateService.getTemplateById(templateId));
+    }
+
+    /**
+     * Get a specific versionId of a template by template ID and versionId ID.
+     */
+    @GetMapping("/{templateId}/versions/{versionId}")
+    public ResponseEntity<TemplateVersionResponseDTO> getVersion(
+            @PathVariable Long templateId, @PathVariable Integer versionId) {
+        return ResponseEntity.ok(
+                templateService.getTemplateVersion(templateId, versionId)
+        );
     }
 
     /**
      * Get latest version of a template by template ID.
      */
-    @GetMapping("/{id}/versions/latest")
-    public ResponseEntity<TemplateVersionResponseDTO> getLatestVersion(@PathVariable Long id) {
-        return ResponseEntity.ok(templateService.getLatestTemplateVersion(id));
+    @GetMapping("/{templateId}/versions/latest")
+    public ResponseEntity<TemplateVersionResponseDTO> getLatestVersion(@PathVariable Long templateId) {
+        return ResponseEntity.ok(templateService.getLatestTemplateVersion(templateId));
     }
 
     /**
-     * Get a specific version of a template by template ID and version ID.
+     * Create a new template version (backoffice).
      */
-    @GetMapping("/{id}/versions/{version}")
-    public ResponseEntity<TemplateVersionResponseDTO> getVersion(
-            @PathVariable Long id, @PathVariable Integer version) {
-        return ResponseEntity.ok(
-                templateService.getTemplateVersion(id, version)
-        );
+    @PostMapping
+    public ResponseEntity<TemplateVersionResponseDTO> createVersion(@RequestBody TemplateRequestDTO request) {
+        TemplateVersionResponseDTO response =
+                templateService.createTemplateVersion(request);
+
+        return ResponseEntity.ok(response);
     }
 
 }

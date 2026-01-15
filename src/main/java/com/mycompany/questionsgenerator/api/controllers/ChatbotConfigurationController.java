@@ -15,14 +15,6 @@ public class ChatbotConfigurationController {
 
     private final IChatbotConfigurationService chatbotConfigurationService;
 
-    @PostMapping("/activate")
-    public ResponseEntity<Void> activate(@RequestBody ActivateChatbotRequestDTO request) {
-        chatbotConfigurationService.activateProvider(
-                ChatbotProvider.valueOf(request.getProvider())
-        );
-        return ResponseEntity.ok().build();
-    }
-
     @GetMapping("/active")
     public ResponseEntity<ChatbotConfigurationResponseDTO> getActive() {
 
@@ -35,4 +27,13 @@ public class ChatbotConfigurationController {
                         .build()
         );
     }
+
+    @PostMapping("/activate")
+    public ResponseEntity<Void> activate(@RequestBody ActivateChatbotRequestDTO request) {
+        chatbotConfigurationService.activateProvider(
+                ChatbotProvider.valueOf(request.getProvider())
+        );
+        return ResponseEntity.ok().build();
+    }
+
 }

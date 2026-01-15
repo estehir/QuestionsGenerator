@@ -6,12 +6,12 @@ import com.mycompany.questionsgenerator.api.dtos.TemplateVersionResponseDTO;
 
 public interface ITemplateService {
 
-    TemplateResponseDTO getTemplateById(Long id);
+    TemplateResponseDTO getTemplateById(Long templateId);
 
     TemplateVersionResponseDTO createTemplateVersion(TemplateRequestDTO request);
 
     TemplateVersionResponseDTO getLatestTemplateVersion(Long templateId);
 
-    TemplateVersionResponseDTO getTemplateVersion(Long templateId, Integer version);
+    TemplateVersionResponseDTO getTemplateVersion(Long templateId, Integer versionId);
 
 }

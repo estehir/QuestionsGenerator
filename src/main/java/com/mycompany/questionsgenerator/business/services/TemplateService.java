@@ -26,8 +26,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class TemplateService implements ITemplateService {
 
-    private static final Pattern PLACEHOLDER_PATTERN =
-            Pattern.compile("\\{\\{(\\w+)}}");
+    private static final Pattern PLACEHOLDER_PATTERN = Pattern.compile("\\{\\{(\\w+)}}");
 
     private final ITemplateRepository templateRepository;
     private final ITemplateVersionRepository templateVersionRepository;
@@ -35,9 +34,9 @@ public class TemplateService implements ITemplateService {
 
     @Override
     @Transactional(readOnly = true)
-    public TemplateResponseDTO getTemplateById(Long id) {
+    public TemplateResponseDTO getTemplateById(Long templateId) {
 
-        Template template = templateRepository.findById(id)
+        Template template = templateRepository.findById(templateId)
                 .orElseThrow(() -> new NoSuchElementException("Template not found"));
 
         int latestVersion = template.getVersions().stream()
@@ -159,20 +158,16 @@ public class TemplateService implements ITemplateService {
 
     @Override
     @Transactional(readOnly = true)
-    public TemplateVersionResponseDTO getTemplateVersion(
-            Long templateId,
-            Integer version
-    ) {
+    public TemplateVersionResponseDTO getTemplateVersion(Long templateId, Integer versionId) {
         TemplateVersion templateVersion =
                 templateVersionRepository
-                        .findByTemplateIdAndVersion(templateId, version)
+                        .findByTemplateIdAndVersion(templateId, versionId)
                         .orElseThrow(() ->
                                 new NoSuchElementException("Template version not found")
                         );
 
         return toResponse(templateVersion);
     }
-
 
     // 🔹 helpers
 

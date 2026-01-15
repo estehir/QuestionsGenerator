@@ -16,6 +16,15 @@ public class PromptDefinitionController {
 
     private final IPromptDefinitionService promptDefinitionService;
 
+    @GetMapping("/active")
+    public ResponseEntity<PromptDefinitionResponseDTO> getActive() {
+        return ResponseEntity.ok(promptDefinitionService.getActive());
+    }
+
+    @GetMapping
+    public ResponseEntity<List<PromptDefinitionResponseDTO>> getAll() {
+        return ResponseEntity.ok(promptDefinitionService.getAll());
+    }
     @PostMapping
     public ResponseEntity<PromptDefinitionResponseDTO> create(@RequestBody PromptDefinitionRequestDTO request) {
         return ResponseEntity.ok(promptDefinitionService.create(request));
@@ -26,14 +35,5 @@ public class PromptDefinitionController {
         return ResponseEntity.ok(promptDefinitionService.activate(id));
     }
 
-    @GetMapping("/active")
-    public ResponseEntity<PromptDefinitionResponseDTO> getActive() {
-        return ResponseEntity.ok(promptDefinitionService.getActive());
-    }
-
-    @GetMapping
-    public ResponseEntity<List<PromptDefinitionResponseDTO>> getAll() {
-        return ResponseEntity.ok(promptDefinitionService.getAll());
-    }
 }
 
