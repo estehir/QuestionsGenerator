@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
 public class PromptDefinitionResponseDTO {
 
     private Long id;
-    private String version;
+    private Integer version;
     private String description;
     private String text;
     private Boolean active;

@@ -6,6 +6,8 @@ import com.mycompany.questionsgenerator.business.models.enums.ChatbotProvider;
 import com.mycompany.questionsgenerator.persistence.interfaces.IChatbotConfigurationRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -16,6 +18,7 @@ public class ChatbotConfigurationService implements IChatbotConfigurationService
 
     @Override
     @Transactional
+    @CacheEvict(value = "activeChatbotProvider", allEntries = true)
     public void activateProvider(ChatbotProvider provider) {
 
         // Desativa o atual (se existir)
@@ -37,6 +40,7 @@ public class ChatbotConfigurationService implements IChatbotConfigurationService
     }
 
     @Override
+    @Cacheable("activeChatbotProvider")
     public ChatbotProvider getActiveProvider() {
         return repository.findByActiveTrue()
                 .map(ChatbotConfiguration::getProvider)

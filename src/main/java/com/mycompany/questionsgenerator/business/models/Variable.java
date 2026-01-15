@@ -4,27 +4,16 @@ import com.mycompany.questionsgenerator.business.models.enums.VariableValueType;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 @Entity
 @Getter
 @Setter
 @NoArgsConstructor
+@AllArgsConstructor(access = AccessLevel.PROTECTED)
+@Builder
 public class Variable {
-
-    @Builder
-    private Variable(
-            String code,
-            String description,
-            String placeholder,
-            VariableValueType valueType
-    ) {
-        this.code = code;
-        this.description = description;
-        this.placeholder = placeholder;
-        this.valueType = valueType;
-    }
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -48,7 +37,9 @@ public class Variable {
             cascade = CascadeType.ALL,
             orphanRemoval = true
     )
-    private List<VariableOption> options = new ArrayList<>();
+    @Builder.Default
+    @OrderBy("orderIndex ASC")
+    private Set<VariableOption> options = new HashSet<>();
 
     public void addOption(VariableOption option) {
         options.add(option);

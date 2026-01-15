@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.Set;
 
 @Entity
 @Getter
@@ -11,31 +13,39 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor(access = AccessLevel.PROTECTED)
 @Builder
-public class PromptDefinition {
+public class TemplateVersion {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(nullable = false)
+    private Template template;
+
     @Column(nullable = false)
     private Integer version;
 
-    @Column()
-    private String description;
-
     @Column(nullable = false, columnDefinition = "text")
-    private String text;
+    private String templateText;
 
-    @Column(nullable = false)
-    private Boolean active = false;
+    @OneToMany(
+            mappedBy = "templateVersion",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true
+    )
+    @Builder.Default
+    @OrderBy("id ASC")
+    private Set<TemplateVersionVariable> variables = new HashSet<>();
 
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
     @PrePersist
-    public void prePersist() {
+    void prePersist() {
         createdAt = LocalDateTime.now();
     }
-
 }
+
+
 

@@ -2,12 +2,20 @@ package com.mycompany.questionsgenerator.business.services;
 
 import com.mycompany.questionsgenerator.api.dtos.*;
 import com.mycompany.questionsgenerator.business.interfaces.ITemplateService;
-import com.mycompany.questionsgenerator.business.models.*;
+import com.mycompany.questionsgenerator.business.models.Template;
+import com.mycompany.questionsgenerator.business.models.TemplateVersion;
+import com.mycompany.questionsgenerator.business.models.TemplateVersionVariable;
+import com.mycompany.questionsgenerator.business.models.Variable;
 import com.mycompany.questionsgenerator.persistence.interfaces.ITemplateRepository;
+import com.mycompany.questionsgenerator.persistence.interfaces.ITemplateVersionRepository;
 import com.mycompany.questionsgenerator.persistence.interfaces.IVariableRepository;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 import java.util.regex.Matcher;
@@ -22,32 +30,78 @@ public class TemplateService implements ITemplateService {
             Pattern.compile("\\{\\{(\\w+)}}");
 
     private final ITemplateRepository templateRepository;
+    private final ITemplateVersionRepository templateVersionRepository;
     private final IVariableRepository variableRepository;
 
     @Override
-    @Transactional
-    public TemplateResponseDTO createOrUpdateTemplate(TemplateRequestDTO request) {
+    @Transactional(readOnly = true)
+    public TemplateResponseDTO getTemplateById(Long id) {
 
+        Template template = templateRepository.findById(id)
+                .orElseThrow(() -> new NoSuchElementException("Template not found"));
+
+        int latestVersion = template.getVersions().stream()
+                .mapToInt(TemplateVersion::getVersion)
+                .max()
+                .orElse(0);
+
+        return TemplateResponseDTO.builder()
+                .id(template.getId())
+                .name(template.getName())
+                .latestVersion(latestVersion)
+                .build();
+    }
+
+    @Override
+    @Transactional
+    @CacheEvict(value = "latestTemplateVersion", allEntries = true)
+    public TemplateVersionResponseDTO createTemplateVersion(TemplateRequestDTO request) {
+
+        // 1️⃣ Buscar ou criar o container Template
         Template template = templateRepository
                 .findByName(request.getName())
-                .orElseGet(() -> Template.builder().name(request.getName()).build());
+                .orElseGet(() -> {
+                    Template t = new Template();
+                    t.setName(request.getName());
+                    return t;
+                });
 
-        template.setTemplateText(request.getTemplateText());
+        // 2️⃣ Calcular próxima versão
+        int nextVersion = template.getVersions().isEmpty()
+                ? 1
+                : template.getVersions().stream()
+                .mapToInt(TemplateVersion::getVersion)
+                .max()
+                .getAsInt() + 1;
 
-        // 1️⃣ Extrair variáveis do texto
-        Set<String> codesInText = extractCodesFromText(request.getTemplateText());
+        // 3️⃣ Criar nova versão
+        TemplateVersion version = TemplateVersion.builder()
+                .template(template)
+                .version(nextVersion)
+                .templateText(request.getTemplateText())
+                .build();
 
-        // 2️⃣ Buscar variáveis existentes
-        List<Variable> variables = variableRepository.findByCodeIn(codesInText);
+        // 4️⃣ Extrair variáveis do texto
+        Set<String> codesInText =
+                extractCodesFromText(request.getTemplateText());
+
+        // 5️⃣ Buscar variáveis existentes
+        List<Variable> variables =
+                variableRepository.findByCodeIn(codesInText);
 
         if (variables.size() != codesInText.size()) {
-            throw new IllegalArgumentException("Template contains unknown variables");
+            throw new IllegalArgumentException(
+                    "Template contains unknown variables"
+            );
         }
 
         Map<String, Variable> variableMap = variables.stream()
-                .collect(Collectors.toMap(Variable::getCode, v -> v));
+                .collect(Collectors.toMap(
+                        Variable::getCode,
+                        v -> v
+                ));
 
-        // 3️⃣ Validar configuração enviada
+        // 6️⃣ Validar configuração enviada
         Map<String, TemplateVariableConfigDTO> configMap =
                 request.getVariables().stream()
                         .collect(Collectors.toMap(
@@ -61,34 +115,64 @@ public class TemplateService implements ITemplateService {
             );
         }
 
-        // 4️⃣ Sincronizar TemplateVariable
-        template.clearVariables();
-
-        templateRepository.flush();
-
+        // 7️⃣ Criar vínculos TemplateVersionVariable
         for (String code : codesInText) {
             TemplateVariableConfigDTO cfg = configMap.get(code);
-
-            TemplateVariable tv = TemplateVariable.builder()
-                    .template(template)
+            TemplateVersionVariable tv = TemplateVersionVariable.builder()
+                    .templateVersion(version)
                     .variable(variableMap.get(code))
                     .required(cfg.getRequired())
                     .build();
-
-            template.addVariable(tv);
+            version.getVariables().add(tv);
         }
 
+        // 8️⃣ Associar versão ao template
+        template.getVersions().add(version);
+
+        // 9️⃣ Persistir (cascade resolve tudo)
         Template saved = templateRepository.save(template);
 
-        return toResponse(saved);
+        TemplateVersion createdVersion = saved.getVersions().stream()
+                .max(Comparator.comparingInt(TemplateVersion::getVersion))
+                .orElseThrow();
+
+        return toResponse(createdVersion);
     }
 
     @Override
-    public TemplateResponseDTO getTemplateById(Long id) {
-        return templateRepository.findByIdWithVariables(id)
-                .map(this::toResponse)
+    @Transactional(readOnly = true)
+    @Cacheable(value = "latestTemplateVersion", key = "#templateId")
+    public TemplateVersionResponseDTO getLatestTemplateVersion(Long templateId) {
+        TemplateVersion latestVersion = templateVersionRepository
+                .findByTemplateId(
+                        templateId,
+                        PageRequest.of(
+                                0,
+                                1,
+                                Sort.by(Sort.Direction.DESC, "version")))
+                .stream()
+                .findFirst()
                 .orElseThrow(() -> new NoSuchElementException("Template not found"));
+
+        return toResponse(latestVersion);
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public TemplateVersionResponseDTO getTemplateVersion(
+            Long templateId,
+            Integer version
+    ) {
+        TemplateVersion templateVersion =
+                templateVersionRepository
+                        .findByTemplateIdAndVersion(templateId, version)
+                        .orElseThrow(() ->
+                                new NoSuchElementException("Template version not found")
+                        );
+
+        return toResponse(templateVersion);
+    }
+
 
     // 🔹 helpers
 
@@ -101,24 +185,28 @@ public class TemplateService implements ITemplateService {
         return codes;
     }
 
-    private TemplateResponseDTO toResponse(Template template) {
-        return TemplateResponseDTO.builder()
-                .id(template.getId())
-                .name(template.getName())
-                .templateText(template.getTemplateText())
-                .createdAt(template.getCreatedAt())
-                .updatedAt(template.getUpdatedAt())
-                .variables(
-                        template.getVariables().stream()
-                                .map(tv -> TemplateVariableResponseDTO.builder()
-                                        .code(tv.getVariable().getCode())
-                                        .description(tv.getVariable().getDescription())
-                                        .required(tv.getRequired())
-                                        .valueType(tv.getVariable().getValueType().name())
-                                        .build()
-                                )
-                                .toList()
-                )
-                .build();
+    private TemplateVersionResponseDTO toResponse(TemplateVersion version) {
+        Template template = version.getTemplate();
+
+        return TemplateVersionResponseDTO.builder()
+            .templateId(template.getId())
+            .templateName(template.getName())
+            .versionId(version.getId())
+            .version(version.getVersion())
+            .templateText(version.getTemplateText())
+            .createdAt(version.getCreatedAt())
+            .variables(
+                    version.getVariables().stream()
+                            .map(tv -> TemplateVariableResponseDTO.builder()
+                                    .code(tv.getVariable().getCode())
+                                    .description(tv.getVariable().getDescription())
+                                    .required(tv.getRequired())
+                                    .valueType(tv.getVariable().getValueType().name())
+                                    .build()
+                            )
+                            .toList()
+            )
+            .build();
     }
+
 }

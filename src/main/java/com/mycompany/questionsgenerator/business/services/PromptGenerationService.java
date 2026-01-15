@@ -4,35 +4,48 @@ import com.mycompany.questionsgenerator.api.dtos.GeneratePromptRequestDTO;
 import com.mycompany.questionsgenerator.business.interfaces.IPromptGenerationService;
 import com.mycompany.questionsgenerator.business.models.*;
 import com.mycompany.questionsgenerator.business.models.enums.VariableValueType;
+import com.mycompany.questionsgenerator.business.vo.PromptGenerationVO;
 import com.mycompany.questionsgenerator.persistence.interfaces.IPromptDefinitionRepository;
-import com.mycompany.questionsgenerator.persistence.interfaces.ITemplateRepository;
-import jakarta.transaction.Transactional;
+import com.mycompany.questionsgenerator.persistence.interfaces.ITemplateVersionRepository;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.text.StringSubstitutor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.NoSuchElementException;
 
 @Service
 @RequiredArgsConstructor
 public class PromptGenerationService implements IPromptGenerationService {
 
-    private final ITemplateRepository templateRepository;
+    private final ITemplateVersionRepository templateVersionRepository;
     private final IPromptDefinitionRepository promptDefinitionRepository;
 
     @Override
-    @Transactional
-    public String generatePrompt(GeneratePromptRequestDTO request) {
+    @Transactional(readOnly = true)
+    public PromptGenerationVO generatePrompt(GeneratePromptRequestDTO request) {
 
-        Template template = templateRepository.findByIdWithVariables(request.getTemplateId())
-                .orElseThrow(() -> new IllegalArgumentException("Template not found"));
+        // 1️⃣ Buscar TemplateVersion com variáveis
+        TemplateVersion templateVersion = templateVersionRepository
+            .findByTemplateId(
+                    request.getTemplateId(),
+                    PageRequest.of(
+                            0,
+                            1,
+                            Sort.by(Sort.Direction.DESC, "version")))
+            .stream()
+            .findFirst()
+            .orElseThrow(() -> new NoSuchElementException("Template not found"));
 
         Map<String, String> userValues = request.getVariables();
-
         Map<String, String> resolvedValues = new HashMap<>();
 
-        for (TemplateVariable tv : template.getVariables()) {
+        // 2️⃣ Validar e resolver variáveis
+        for (TemplateVersionVariable tv : templateVersion.getVariables()) {
 
             Variable variable = tv.getVariable();
             String code = variable.getCode();
@@ -47,24 +60,39 @@ public class PromptGenerationService implements IPromptGenerationService {
 
             if (userValue != null) {
                 validateValue(variable, userValue);
-                resolvedValues.put(code, resolveValue(variable, userValue));
+                resolvedValues.put(
+                        code,
+                        resolveValue(variable, userValue)
+                );
             }
         }
 
-        // Substituição usando Apache Commons Text
+        // 3️⃣ Substituir placeholders
         StringSubstitutor substitutor =
                 new StringSubstitutor(resolvedValues, "{{", "}}");
 
+        // 4️⃣ Buscar prompt base ativo
         PromptDefinition promptBase =
                 promptDefinitionRepository.findByActiveTrue()
-                        .orElseThrow(() -> new IllegalStateException("No active prompt"));
+                        .orElseThrow(() ->
+                                new IllegalStateException("No active prompt")
+                        );
 
-        return promptBase.getText()
-                + "\n\n"
-                + "---"
-                + "\n\n"
-                + substitutor.replace(template.getTemplateText());
+        // 5️⃣ Montar prompt final
+        String finalPrompt = promptBase.getText()
+                + "\n\n---\n\n"
+                + substitutor.replace(templateVersion.getTemplateText());
+
+        return PromptGenerationVO.builder()
+                .templateId(request.getTemplateId())
+                .templateVersionId(templateVersion.getId())
+                .promptDefinitionId(promptBase.getId())
+                .variablesSnapshot(request.getVariables())
+                .finalPrompt(finalPrompt)
+                .build();
     }
+
+    // 🔹 helpers
 
     private void validateValue(Variable variable, String value) {
 
@@ -72,7 +100,7 @@ public class PromptGenerationService implements IPromptGenerationService {
 
         switch (type) {
             case TEXT -> {
-                // nada a validar por enquanto
+                // nada a validar
             }
             case NUMBER -> {
                 try {
@@ -110,3 +138,4 @@ public class PromptGenerationService implements IPromptGenerationService {
         return value;
     }
 }
+

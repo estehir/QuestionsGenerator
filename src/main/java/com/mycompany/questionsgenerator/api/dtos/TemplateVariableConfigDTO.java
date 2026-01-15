@@ -1,8 +1,11 @@
 package com.mycompany.questionsgenerator.api.dtos;
 
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 
 @Data
+@AllArgsConstructor(access = AccessLevel.PROTECTED)
 public class TemplateVariableConfigDTO {
 
     /**
@@ -13,5 +16,6 @@ public class TemplateVariableConfigDTO {
     /**
      * Se a variável é obrigatória no template
      */
-    private Boolean required = true;
+    private Boolean required;
+
 }

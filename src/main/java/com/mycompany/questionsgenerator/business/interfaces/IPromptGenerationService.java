@@ -1,8 +1,9 @@
 package com.mycompany.questionsgenerator.business.interfaces;
 
 import com.mycompany.questionsgenerator.api.dtos.GeneratePromptRequestDTO;
+import com.mycompany.questionsgenerator.business.vo.PromptGenerationVO;
 
 public interface IPromptGenerationService {
 
-    String generatePrompt(GeneratePromptRequestDTO request);
+    PromptGenerationVO generatePrompt(GeneratePromptRequestDTO request);
 }

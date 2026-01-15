@@ -4,20 +4,16 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 @Entity
 @Getter
 @Setter
 @NoArgsConstructor
+@AllArgsConstructor(access = AccessLevel.PROTECTED)
+@Builder
 public class Template {
-
-    @Builder
-    private Template(String name, String templateText) {
-        this.name = name;
-        this.templateText = templateText;
-    }
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -26,41 +22,21 @@ public class Template {
     @Column(nullable = false, unique = true, length = 100)
     private String name;
 
-    @Column(nullable = false)
-    private String templateText;
-
     @OneToMany(
             mappedBy = "template",
             cascade = CascadeType.ALL,
             orphanRemoval = true
     )
-    private List<TemplateVariable> variables = new ArrayList<>();
-
-    public void addVariable(TemplateVariable tv) {
-        variables.add(tv);
-        tv.setTemplate(this);
-    }
-
-    public void clearVariables() {
-        variables.clear();
-    }
+    @Builder.Default
+    @OrderBy("version ASC")
+    private Set<TemplateVersion> versions = new HashSet<>();
 
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    @Column(nullable = false)
-    private LocalDateTime updatedAt;
-
     @PrePersist
-    public void prePersist() {
+    void prePersist() {
         createdAt = LocalDateTime.now();
-        updatedAt = createdAt;
-    }
-
-    @PreUpdate
-    public void preUpdate() {
-        updatedAt = LocalDateTime.now();
     }
 
 }
-

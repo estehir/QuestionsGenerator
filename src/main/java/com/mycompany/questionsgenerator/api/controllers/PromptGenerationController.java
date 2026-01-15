@@ -3,9 +3,13 @@ package com.mycompany.questionsgenerator.api.controllers;
 import com.mycompany.questionsgenerator.api.dtos.GeneratePromptRequestDTO;
 import com.mycompany.questionsgenerator.api.dtos.GeneratePromptResponseDTO;
 import com.mycompany.questionsgenerator.business.interfaces.IPromptGenerationService;
+import com.mycompany.questionsgenerator.business.vo.PromptGenerationVO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("api/admin/prompts/generate")
@@ -18,11 +22,11 @@ public class PromptGenerationController {
     public ResponseEntity<GeneratePromptResponseDTO> generate(
             @RequestBody GeneratePromptRequestDTO request
     ) {
-        String prompt = promptGenerationService.generatePrompt(request);
+        PromptGenerationVO prompt = promptGenerationService.generatePrompt(request);
 
         return ResponseEntity.ok(
                 GeneratePromptResponseDTO.builder()
-                        .prompt(prompt)
+                        .prompt(prompt.getFinalPrompt())
                         .build()
         );
     }

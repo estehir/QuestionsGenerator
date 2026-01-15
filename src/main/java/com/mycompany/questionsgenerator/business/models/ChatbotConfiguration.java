@@ -2,9 +2,7 @@ package com.mycompany.questionsgenerator.business.models;
 
 import com.mycompany.questionsgenerator.business.models.enums.ChatbotProvider;
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 import java.time.LocalDateTime;
 
@@ -12,6 +10,7 @@ import java.time.LocalDateTime;
 @Getter
 @Setter
 @NoArgsConstructor
+@AllArgsConstructor(access = AccessLevel.PROTECTED)
 public class ChatbotConfiguration {
 
     @Id

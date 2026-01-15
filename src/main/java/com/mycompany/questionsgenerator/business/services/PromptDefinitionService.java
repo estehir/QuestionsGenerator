@@ -7,6 +7,8 @@ import com.mycompany.questionsgenerator.business.models.PromptDefinition;
 import com.mycompany.questionsgenerator.persistence.interfaces.IPromptDefinitionRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -21,8 +23,10 @@ public class PromptDefinitionService implements IPromptDefinitionService {
     @Override
     public PromptDefinitionResponseDTO create(PromptDefinitionRequestDTO request) {
 
+        int nextVersion = repository.findMaxVersion().orElse(0) + 1;
+
         PromptDefinition prompt = PromptDefinition.builder()
-                .version(request.getVersion())
+                .version(nextVersion)
                 .description(request.getDescription())
                 .text(request.getText())
                 .active(false)
@@ -32,6 +36,7 @@ public class PromptDefinitionService implements IPromptDefinitionService {
     }
 
     @Override
+    @CacheEvict(value = "activePromptDefinition", allEntries = true)
     public PromptDefinitionResponseDTO activate(Long id) {
 
         repository.findByActiveTrue()
@@ -46,6 +51,7 @@ public class PromptDefinitionService implements IPromptDefinitionService {
     }
 
     @Override
+    @Cacheable("activePromptDefinition")
     public PromptDefinitionResponseDTO getActive() {
         return repository.findByActiveTrue()
                 .map(this::toResponse)
